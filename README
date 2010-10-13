@@ -1,0 +1,7 @@
+NAME
+----
+    svn branch graph
+
+DESCRIPTION
+-----------
+    Displays a simple graph of svn commits of different branches
