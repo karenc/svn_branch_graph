@@ -1,31 +1,96 @@
-$def with (branches, svn_logs, revisions)
+$def with (branches, svn_logs, copyfrom)
 <html>
     <head>
         <title>svn_branch_graph for ${', '.join(branches)}</title>
         <script type="text/javascript">
-            function draw() {
-                /*
-                var canvas = document.getElementById('canvas');
-                if (!canvas.getContext) {
-                    return;
-                }
-                */
-                //var ctx = canvas.getContext('2d');
-                var revisions = eval('($:revisions)');
-                alert(revisions);
-                var svnLogs = eval('($:svn_logs)');
-                for (var branch in svnLogs) {
-                    for (var i = 0; i < svnLogs[branch].length; i++) {
-                        var info = svnLogs[branch][i];
-                        alert(info.author + ', ' + info.revision + ', ' + info.msg);
+            function SvnBranchGraph(canvas, svnLogs, copyFrom) {
+                this.canvas = canvas;
+                this.ctx = this.canvas.getContext('2d');
+                this.ctx.font = '18px Arial';
+                this.svnLogs = svnLogs;
+                this.copyFrom = copyFrom;
+
+                /* radius of dots representing commits */
+                this.radius = 4;
+                /* the x coordinate to start drawing commits */
+                this.startX = 200;
+                /* the y coordinate to start drawing */
+                this.startY = 15;
+                /* the amount to increment y after each branch */
+                this.incrementY = 20;
+            }
+
+            SvnBranchGraph.prototype.draw = function() {
+                var branches = {};
+                var revisions = {};
+                var x = this.startX;
+                var y = this.startY;
+                var previousBranch = '';
+
+                for (var i = 0; i < this.svnLogs.length; i++) {
+                    var info = this.svnLogs[i];
+
+                    // try to compress the number of dots to display
+                    if (info.branch == previousBranch) {
+                        x += 1;
+                    } else {
+                        x += this.radius * 3;
                     }
+                    previousBranch = info.branch;
+
+                    if (branches[info.branch] === undefined) {
+                        branches[info.branch] = {'x': 0, 'y': y - this.radius};
+                        this.ctx.fillText(info.branch, 10, y);
+                        y += 20;
+                    }
+
+                    branches[info.branch].x = x;
+                    this.drawCommit(x, branches[info.branch].y);
+                    revisions[info.revision] = {
+                        'x': x, 'y': branches[info.branch].y};
                 }
+
+                for (var branch in branches) {
+                    var pos = branches[branch];
+                    this.ctx.beginPath();
+                    var copyfrom = this.copyFrom[branch];
+                    if (copyfrom !== undefined &&
+                            revisions[copyfrom] !== undefined) {
+                        moveToX = revisions[copyfrom].x;
+                        moveToY = revisions[copyfrom].y;
+                    } else {
+                        moveToX = this.startX;
+                        moveToY = pos.y;
+                    }
+                    this.ctx.moveTo(moveToX, moveToY);
+                    this.ctx.lineTo(moveToX, pos.y);
+                    this.ctx.lineTo(pos.x, pos.y);
+                    this.ctx.moveTo(-moveToX, -moveToY);
+                    this.ctx.stroke();
+                    this.ctx.closePath();
+                }
+            }
+
+            SvnBranchGraph.prototype.drawCommit = function(x, y) {
+                // x, y is the center of the circle
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, this.radius, 0, Math.PI * 2, true);
+                this.ctx.fill();
+                this.ctx.closePath();
+            }
+
+            function bodyOnload() {
+                var graph = new SvnBranchGraph(document.getElementById('canvas'),
+                        eval('$:{svn_logs.replace("'", "\\'")}'),
+                        eval('($:{copyfrom.replace("'", "\\'")})'));
+                graph.draw();
             }
         </script>
     </head>
-    <body onload="draw();">
-        <!--
-        <canvas id="canvas" width="1024" height="750" style="background-color: black"></canvas>
-        -->
+    <body onload="bodyOnload();">
+        <p>
+            <a href="/">I want to view other branches.</a>
+        </p>
+        <canvas id="canvas" width="2048" height="800"></canvas>
     </body>
 </html>

@@ -10,6 +10,14 @@ $def with (svn_branches_url, branches, selected_branches)
         </style>
     </head>
     <body>
+        <p>Please give a regexp match for branches to include in the graph:</p>
+        <form action="get-graph">
+            <input name="branch_regexp" type="text" />
+            <p>
+            <input type="submit" value="View Graph" />
+            </p>
+        </form>
+
         <p>Please select the branches to include in the graph:</p>
         <form action="get-graph">
             $for (i, branch) in enumerate(branches):
@@ -22,7 +30,7 @@ $def with (svn_branches_url, branches, selected_branches)
                 </div>
             <div style="clear: both;"></div>
             <p>
-                <input type="submit" />
+                <input type="submit" value="View Graph" />
             </p>
         </form>
     </body>
