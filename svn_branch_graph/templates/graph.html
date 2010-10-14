@@ -2,13 +2,35 @@ $def with (branches, svn_logs, copyfrom)
 <html>
     <head>
         <title>svn_branch_graph for ${', '.join(branches)}</title>
+        <style type="text/css">
+            body {
+                font-family: Arial;
+            }
+        </style>
         <script type="text/javascript">
-            function SvnBranchGraph(canvas, svnLogs, copyFrom) {
+            /**
+             * Parameters:
+             *   - canvas: the <canvas> element
+             *   - svnLogs: a list of logs in the format of
+             *              [{revision: ..., author: ..., msg: ...}, ...]
+             *   - copyFrom: a hash of branch -> revision that the branch is
+             *               copied from
+             *   - author: a html element to write the author in
+             *   - revision: a html element to write the revision in
+             *   - msg: a html element to write the message in
+             */
+            function SvnBranchGraph(canvas, svnLogs, copyFrom, author,
+                    revision, msg) {
                 this.canvas = canvas;
+                this.canvas.addEventListener('mousemove', this.displayInfo(),
+                        false);
                 this.ctx = this.canvas.getContext('2d');
                 this.ctx.font = '18px Arial';
                 this.svnLogs = svnLogs;
                 this.copyFrom = copyFrom;
+                this.author = author;
+                this.revision = revision;
+                this.msg = msg;
 
                 /* radius of dots representing commits */
                 this.radius = 4;
@@ -17,12 +39,32 @@ $def with (branches, svn_logs, copyfrom)
                 /* the y coordinate to start drawing */
                 this.startY = 15;
                 /* the amount to increment y after each branch */
-                this.incrementY = 20;
+                this.incrementY = 25;
+            }
+
+            SvnBranchGraph.prototype.displayInfo = function() {
+                var this_ = this;
+                return function(ev) {
+                    var x = ev.layerX - this_.canvas.offsetLeft;
+                    var y = ev.layerY - this_.canvas.offsetTop;
+                    var get = document.getElementById;
+                    for (var revision in this_.revisions) {
+                        var info = this_.revisions[revision];
+                        if (x >= info.x - this_.radius &&
+                                x <= info.x + this_.radius &&
+                                y >= info.y - this_.radius &&
+                                y <= info.y + this_.radius) {
+                            this_.author.innerHTML = info.info.author;
+                            this_.revision.innerHTML = info.info.revision;
+                            this_.msg.innerHTML = info.info.msg;
+                        }
+                    }
+                };
             }
 
             SvnBranchGraph.prototype.draw = function() {
                 var branches = {};
-                var revisions = {};
+                this.revisions = {};
                 var x = this.startX;
                 var y = this.startY;
                 var previousBranch = '';
@@ -41,13 +83,13 @@ $def with (branches, svn_logs, copyfrom)
                     if (branches[info.branch] === undefined) {
                         branches[info.branch] = {'x': 0, 'y': y - this.radius};
                         this.ctx.fillText(info.branch, 10, y);
-                        y += 20;
+                        y += this.incrementY;
                     }
 
                     branches[info.branch].x = x;
                     this.drawCommit(x, branches[info.branch].y);
-                    revisions[info.revision] = {
-                        'x': x, 'y': branches[info.branch].y};
+                    this.revisions[info.revision] = {
+                        'x': x, 'y': branches[info.branch].y, 'info': info};
                 }
 
                 for (var branch in branches) {
@@ -55,9 +97,9 @@ $def with (branches, svn_logs, copyfrom)
                     this.ctx.beginPath();
                     var copyfrom = this.copyFrom[branch];
                     if (copyfrom !== undefined &&
-                            revisions[copyfrom] !== undefined) {
-                        moveToX = revisions[copyfrom].x;
-                        moveToY = revisions[copyfrom].y;
+                            this.revisions[copyfrom] !== undefined) {
+                        moveToX = this.revisions[copyfrom].x;
+                        moveToY = this.revisions[copyfrom].y;
                     } else {
                         moveToX = this.startX;
                         moveToY = pos.y;
@@ -82,7 +124,10 @@ $def with (branches, svn_logs, copyfrom)
             function bodyOnload() {
                 var graph = new SvnBranchGraph(document.getElementById('canvas'),
                         eval('$:{svn_logs.replace("'", "\\'")}'),
-                        eval('($:{copyfrom.replace("'", "\\'")})'));
+                        eval('($:{copyfrom.replace("'", "\\'")})'),
+                        document.getElementById('author'),
+                        document.getElementById('revision'),
+                        document.getElementById('msg'));
                 graph.draw();
             }
         </script>
@@ -91,6 +136,11 @@ $def with (branches, svn_logs, copyfrom)
         <p>
             <a href="/">I want to view other branches.</a>
         </p>
+        <div>
+            <p>Author: <span id="author"></span></p>
+            <p>Revision: <span id="revision"></span></p>
+            <p style="height: 50px">Message: <span id="msg"></span></p>
+        </div>
         <canvas id="canvas" width="2048" height="800"></canvas>
     </body>
 </html>

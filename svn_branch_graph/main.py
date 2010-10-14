@@ -67,8 +67,6 @@ class Index(object):
         """Returns the main page of svn branch graph, with a list of
         checkboxes to select which branches
         """
-        selected_branches = web.cookies().get(BRANCH_COOKIE)
-
         svn_branches_url = get_branch_url()
         branches = get_svn_ls(svn_branches_url)
         # only include folders
@@ -76,7 +74,6 @@ class Index(object):
         return render.index(
                 svn_branches_url,
                 branches,
-                selected_branches,
                 )
 
 
@@ -88,8 +85,6 @@ class GetGraph(object):
           - `branch`: list of branch names
         """
         i = web.input(branch=[], branch_regexp='')
-        # cookie lasts for a week
-        web.setcookie('svn-branches', i.branch, 3600 * 24 * 7)
         svn_branch_url = get_branch_url()
 
         if i.branch_regexp:
