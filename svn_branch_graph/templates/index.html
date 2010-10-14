@@ -1,0 +1,29 @@
+$def with (svn_branches_url, branches, selected_branches)
+<html>
+    <head>
+        <title>svn_branch_graph $svn_branches_url</title>
+        <style type="text/css">
+            .branch {
+                width: 300px;
+                float: left;
+            }
+        </style>
+    </head>
+    <body>
+        <p>Please select the branches to include in the graph:</p>
+        <form action="get-graph">
+            $for (i, branch) in enumerate(branches):
+                <div class="branch">
+                    $if branch in selected_branches:
+                        <input name="branch" type="checkbox" id="$branch" value="$branch" checked="checked" />
+                    $else:
+                        <input name="branch" type="checkbox" id="$branch" value="$branch" />
+                    <label for="$branch">$branch</label>
+                </div>
+            <div style="clear: both;"></div>
+            <p>
+                <input type="submit" />
+            </p>
+        </form>
+    </body>
+</html>

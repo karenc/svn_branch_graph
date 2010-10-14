@@ -1,0 +1,31 @@
+$def with (branches, svn_logs, revisions)
+<html>
+    <head>
+        <title>svn_branch_graph for ${', '.join(branches)}</title>
+        <script type="text/javascript">
+            function draw() {
+                /*
+                var canvas = document.getElementById('canvas');
+                if (!canvas.getContext) {
+                    return;
+                }
+                */
+                //var ctx = canvas.getContext('2d');
+                var revisions = eval('($:revisions)');
+                alert(revisions);
+                var svnLogs = eval('($:svn_logs)');
+                for (var branch in svnLogs) {
+                    for (var i = 0; i < svnLogs[branch].length; i++) {
+                        var info = svnLogs[branch][i];
+                        alert(info.author + ', ' + info.revision + ', ' + info.msg);
+                    }
+                }
+            }
+        </script>
+    </head>
+    <body onload="draw();">
+        <!--
+        <canvas id="canvas" width="1024" height="750" style="background-color: black"></canvas>
+        -->
+    </body>
+</html>
