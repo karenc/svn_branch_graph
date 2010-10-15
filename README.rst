@@ -29,4 +29,6 @@ CONFIGURATION
         [svn]
         server-url = http://svnserver/repo/
         branches-path = branches
+        username = username
+        password = password
 

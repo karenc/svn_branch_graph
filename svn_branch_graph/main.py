@@ -24,21 +24,34 @@ branches_path = config.get('svn', 'branches-path')
 if not branches_path:
     branches_path = 'branches'
 
+username = config.get('svn', 'username')
+password = config.get('svn', 'password')
+
 def get_branch_url():
     svn_branches_url = '%s%s' % (server_url, branches_path)
     return svn_branches_url
 
 def get_svn_ls(svn_branches_url):
-    return_code, stdout = call(['svn', 'ls', svn_branches_url])
+    command = ['svn', 'ls', '--non-interactive', svn_branches_url]
+    if username:
+        command.extend(['--username', username])
+    if password:
+        command.extend(['--password', password])
+    return_code, stdout = call(command)
     if return_code != 0:
-        raise RunTimeError('svn ls %s failed.' % svn_branches_url)
+        raise RuntimeError('svn ls %s failed.' % svn_branches_url)
     return stdout.splitlines()
 
 def get_svn_log(svn_branch_url):
-    return_code, stdout = call(['svn', 'log', '-v', '--xml', '--stop-on-copy',
-        svn_branch_url])
+    command = ['svn', 'log', '--non-interactive', '-v',
+        '--xml', '--stop-on-copy', svn_branch_url]
+    if username:
+        command.extend(['--username', username])
+    if password:
+        command.extend(['--password', password])
+    return_code, stdout = call(command)
     if return_code != 0:
-        raise RunTimeError('svn log %s failed.' % svn_branch_url)
+        raise RuntimeError('svn log %s failed.' % svn_branch_url)
     root = xml.etree.ElementTree.fromstring(stdout)
     svn_log = []
     for logentry in root.findall('logentry'):
@@ -52,8 +65,13 @@ def get_svn_log(svn_branch_url):
         if path.get('copyfrom-rev'):
             copyfrom_path = path.get('copyfrom-path')
             copyfrom_rev = path.get('copyfrom-rev')
-            return_code, stdout = call(['svn', 'log', '--xml', '--limit=1',
-                '%s%s@%s' % (server_url, copyfrom_path, copyfrom_rev)])
+            command = ['svn', 'log', '--xml', '--limit=1', '%s%s@%s' % (
+                server_url, copyfrom_path, copyfrom_rev)]
+            if username:
+                command.extend(['--username', username])
+            if password:
+                command.extend(['--password', password])
+            return_code, stdout = call(command)
             log = xml.etree.ElementTree.fromstring(stdout)
             copyfrom = int(log.find('logentry').get('revision'))
     svn_log.reverse()
@@ -104,6 +122,7 @@ class GetGraph(object):
             svn_logs.extend(logs)
         svn_logs.sort(lambda a, b: cmp(a['revision'], b['revision']))
         return render.graph(
+                urls[0],
                 branches,
                 json.dumps(svn_logs).replace('\\', '\\\\'),
                 json.dumps(copyfromlist).replace('\\', '\\\\'),
@@ -115,11 +134,11 @@ urls = (
         '/get-graph', 'GetGraph',
         )
 
-app = web.application(urls, globals())
 render = web.template.render(os.path.join(os.path.dirname(__file__),
     'templates'))
 
 def main():
+    app = web.application(urls, globals())
     app.run()
 
 if __name__ == '__main__':
