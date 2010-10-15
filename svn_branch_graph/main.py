@@ -145,7 +145,11 @@ class GetGraph(object):
                 log.setdefault('branch', branch)
             svn_logs.extend(logs)
         svn_logs.sort(lambda a, b: cmp(a['revision'], b['revision']))
+        changeset_url = None
+        if config.has_section('changeset'):
+            changeset_url = config.get('changeset', 'url')
         return render.graph(
+                json.dumps(changeset_url),
                 urls[0],
                 branches,
                 json.dumps(svn_logs).replace('\\', '\\\\'),

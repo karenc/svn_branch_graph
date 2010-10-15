@@ -44,3 +44,10 @@ CONFIGURATION
     needs to be writeable by the user executing the script and the user needs
     read, write, execute permissions on the directory containing the sqlite3
     database.
+
+    Configure the changeset url by adding this in svn_branch_graph.cfg::
+
+        [changeset]
+        url = http://svnserver/changeset/%s
+
+    where %s is where the revision will go.

@@ -1,4 +1,4 @@
-$def with (root_url, branches, svn_logs, copyfrom)
+$def with (changeset_url, root_url, branches, svn_logs, copyfrom)
 <html>
     <head>
         <title>svn_branch_graph for ${', '.join(branches)}</title>
@@ -16,25 +16,35 @@ $def with (root_url, branches, svn_logs, copyfrom)
              *              [{revision: ..., author: ..., msg: ...}, ...]
              *   - copyFrom: a hash of branch -> revision that the branch is
              *               copied from
+             *   - changesetUrl: a url to go to when a commit is clicked, "%s"
+             *                   will be replaced by the revision.
              *   - author: a html element to write the author in
              *   - revision: a html element to write the revision in
              *   - dateHtml: a html element to write the date in
              *   - msg: a html element to write the message in
              */
             function SvnBranchGraph(canvas, numBranches, svnLogs, copyFrom,
-                    author, revision, dateHtml, msg) {
+                    changesetUrl, author, revision, dateHtml, msg) {
                 this.canvas = canvas;
-                this.canvas.addEventListener('mousemove', this.displayInfo(),
+                this.canvas.addEventListener('mousemove', this.mouseHandler(),
+                        false);
+                this.canvas.addEventListener('mousedown', this.mouseHandler(),
                         false);
                 this.ctx = this.canvas.getContext('2d');
                 this.ctx.font = '18px Arial';
                 this.numBranches = numBranches;
                 this.svnLogs = svnLogs;
                 this.copyFrom = copyFrom;
+                this.changesetUrl = changesetUrl;
                 this.author = author;
                 this.revision = revision;
                 this.date = dateHtml;
                 this.msg = msg;
+
+                /* mouse event handlers */
+                this.mousemove = ['displayInfo'];
+                this.mouseup = [];
+                this.mousedown = ['openChangesetUrl'];
 
                 /* radius of dots representing commits */
                 this.radius = 4;
@@ -46,25 +56,37 @@ $def with (root_url, branches, svn_logs, copyfrom)
                 this.incrementY = 25;
             }
 
-            SvnBranchGraph.prototype.displayInfo = function() {
+            SvnBranchGraph.prototype.mouseHandler = function() {
                 var this_ = this;
                 return function(ev) {
                     var x = ev.layerX - this_.canvas.offsetLeft;
                     var y = ev.layerY - this_.canvas.offsetTop;
-                    var get = document.getElementById;
                     for (var revision in this_.revisions) {
                         var info = this_.revisions[revision];
                         if (x >= info.x - this_.radius &&
                                 x <= info.x + this_.radius &&
                                 y >= info.y - this_.radius &&
                                 y <= info.y + this_.radius) {
-                            this_.author.innerHTML = info.info.author;
-                            this_.revision.innerHTML = info.info.revision;
-                            this_.date.innerHTML = info.info.date;
-                            this_.msg.innerHTML = info.info.msg;
+                            for (var i = 0; i < this_[ev.type].length; i++) {
+                                this_[this_[ev.type][i]](info.info);
+                            }
                         }
                     }
                 };
+            }
+
+            SvnBranchGraph.prototype.openChangesetUrl = function(commit) {
+                if (this.revision.innerHTML == commit.revision) {
+                    window.open(this.changesetUrl.replace('%s',
+                                commit.revision));
+                }
+            }
+
+            SvnBranchGraph.prototype.displayInfo = function(commit) {
+                this.author.innerHTML = commit.author;
+                this.revision.innerHTML = commit.revision;
+                this.date.innerHTML = commit.date;
+                this.msg.innerHTML = commit.msg;
             }
 
             SvnBranchGraph.prototype.draw = function() {
@@ -135,6 +157,7 @@ $def with (root_url, branches, svn_logs, copyfrom)
                         ${len(branches)},
                         eval('$:{svn_logs.replace("'", "\\'")}'),
                         eval('($:{copyfrom.replace("'", "\\'")})'),
+                        eval('$:changeset_url'),
                         document.getElementById('author'),
                         document.getElementById('revision'),
                         document.getElementById('date'),
