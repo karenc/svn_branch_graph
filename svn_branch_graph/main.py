@@ -59,6 +59,8 @@ def get_svn_log(svn_branch_url):
         log['revision'] = int(logentry.get('revision'))
         log['author'] = logentry.findtext('author')
         log['msg'] = logentry.findtext('msg')
+        # date looks like this: 2010-10-11T11:03:25.847546Z
+        log['date'] = logentry.findtext('date').split('.')[0].replace('T', ' ')
         svn_log.append(log)
     copyfrom = None
     for path in logentry.findall('paths/path'):

@@ -17,10 +17,11 @@ $def with (root_url, branches, svn_logs, copyfrom)
              *               copied from
              *   - author: a html element to write the author in
              *   - revision: a html element to write the revision in
+             *   - dateHtml: a html element to write the date in
              *   - msg: a html element to write the message in
              */
             function SvnBranchGraph(canvas, svnLogs, copyFrom, author,
-                    revision, msg) {
+                    revision, dateHtml, msg) {
                 this.canvas = canvas;
                 this.canvas.addEventListener('mousemove', this.displayInfo(),
                         false);
@@ -30,6 +31,7 @@ $def with (root_url, branches, svn_logs, copyfrom)
                 this.copyFrom = copyFrom;
                 this.author = author;
                 this.revision = revision;
+                this.date = dateHtml;
                 this.msg = msg;
 
                 /* radius of dots representing commits */
@@ -56,6 +58,7 @@ $def with (root_url, branches, svn_logs, copyfrom)
                                 y <= info.y + this_.radius) {
                             this_.author.innerHTML = info.info.author;
                             this_.revision.innerHTML = info.info.revision;
+                            this_.date.innerHTML = info.info.date;
                             this_.msg.innerHTML = info.info.msg;
                         }
                     }
@@ -127,6 +130,7 @@ $def with (root_url, branches, svn_logs, copyfrom)
                         eval('($:{copyfrom.replace("'", "\\'")})'),
                         document.getElementById('author'),
                         document.getElementById('revision'),
+                        document.getElementById('date'),
                         document.getElementById('msg'));
                 graph.draw();
             }
@@ -139,6 +143,7 @@ $def with (root_url, branches, svn_logs, copyfrom)
         <div>
             <p>Author: <span id="author"></span></p>
             <p>Revision: <span id="revision"></span></p>
+            <p>Date: <span id="date"></span></p>
             <p style="height: 50px">Message: <span id="msg"></span></p>
         </div>
         <canvas id="canvas" width="2048" height="800"></canvas>
