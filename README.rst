@@ -32,3 +32,15 @@ CONFIGURATION
         username = username
         password = password
 
+    If you want caching enabled, please create an empty sqlite3 database and add
+    this in svn_branch_graph.cfg::
+
+        [cache]
+        enable = True
+        sqlite3-path = svn_branch_graph_cache.sqlite3
+        refresh = 15
+
+    refresh is how long in minutes until cache expire.  The sqlite3 database
+    needs to be writeable by the user executing the script and the user needs
+    read, write, execute permissions on the directory containing the sqlite3
+    database.

@@ -10,10 +10,7 @@ import xml.etree.ElementTree
 
 import web
 
-def call(cmd):
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-    return p.returncode, stdout
+import cache
 
 config = ConfigParser.RawConfigParser()
 config.read('svn_branch_graph.cfg')
@@ -26,6 +23,31 @@ if not branches_path:
 
 username = config.get('svn', 'username')
 password = config.get('svn', 'password')
+
+cache_enabled = False
+if config.has_section('cache'):
+    cache_enabled = config.get('cache', 'enable') == 'True'
+    if cache_enabled:
+        cache_database = cache.CacheSqlite3Database(
+                config.get('cache', 'sqlite3-path'),
+                int(config.get('cache', 'refresh')),
+                )
+        cache_database.dbinit()
+
+def call(cmd):
+    if cache_enabled:
+        cache_database = cache.CacheSqlite3Database(
+                config.get('cache', 'sqlite3-path'),
+                int(config.get('cache', 'refresh')),
+                )
+        stdout = cache_database.get(json.dumps(cmd))
+        if stdout:
+            return 0, stdout
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    stdout, stderr = p.communicate()
+    if p.returncode == 0 and cache_enabled:
+        cache_database.cache(json.dumps(cmd), stdout)
+    return p.returncode, stdout
 
 def get_branch_url():
     svn_branches_url = '%s%s' % (server_url, branches_path)
