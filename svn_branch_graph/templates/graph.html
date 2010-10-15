@@ -11,6 +11,7 @@ $def with (root_url, branches, svn_logs, copyfrom)
             /**
              * Parameters:
              *   - canvas: the <canvas> element
+             *   - numBranches: number of branches
              *   - svnLogs: a list of logs in the format of
              *              [{revision: ..., author: ..., msg: ...}, ...]
              *   - copyFrom: a hash of branch -> revision that the branch is
@@ -20,13 +21,14 @@ $def with (root_url, branches, svn_logs, copyfrom)
              *   - dateHtml: a html element to write the date in
              *   - msg: a html element to write the message in
              */
-            function SvnBranchGraph(canvas, svnLogs, copyFrom, author,
-                    revision, dateHtml, msg) {
+            function SvnBranchGraph(canvas, numBranches, svnLogs, copyFrom,
+                    author, revision, dateHtml, msg) {
                 this.canvas = canvas;
                 this.canvas.addEventListener('mousemove', this.displayInfo(),
                         false);
                 this.ctx = this.canvas.getContext('2d');
                 this.ctx.font = '18px Arial';
+                this.numBranches = numBranches;
                 this.svnLogs = svnLogs;
                 this.copyFrom = copyFrom;
                 this.author = author;
@@ -66,6 +68,10 @@ $def with (root_url, branches, svn_logs, copyfrom)
             }
 
             SvnBranchGraph.prototype.draw = function() {
+                /* adjust the size of the canvas */
+                this.canvas.height = this.startY + this.incrementY * this.numBranches;
+                this.canvas.width = this.startX + this.radius * 3 * this.svnLogs.length;
+
                 var branches = {};
                 this.revisions = {};
                 var x = this.startX;
@@ -126,6 +132,7 @@ $def with (root_url, branches, svn_logs, copyfrom)
 
             function bodyOnload() {
                 var graph = new SvnBranchGraph(document.getElementById('canvas'),
+                        ${len(branches)},
                         eval('$:{svn_logs.replace("'", "\\'")}'),
                         eval('($:{copyfrom.replace("'", "\\'")})'),
                         document.getElementById('author'),
