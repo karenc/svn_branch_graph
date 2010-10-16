@@ -6,6 +6,10 @@ $def with (changeset_url, branches, svn_logs, copyfrom)
             body {
                 font-family: Arial;
             }
+            #commit-info {
+                position: fixed;
+                z-index: -1;
+            }
         </style>
         <script type="text/javascript">
             /**
@@ -20,11 +24,12 @@ $def with (changeset_url, branches, svn_logs, copyfrom)
              *                   will be replaced by the revision.
              *   - author: a html element to write the author in
              *   - revision: a html element to write the revision in
+             *   - branch: a html element to write the branch in
              *   - dateHtml: a html element to write the date in
              *   - msg: a html element to write the message in
              */
             function SvnBranchGraph(canvas, numBranches, svnLogs, copyFrom,
-                    changesetUrl, author, revision, dateHtml, msg) {
+                    changesetUrl, author, revision, branch, dateHtml, msg) {
                 this.canvas = canvas;
                 this.canvas.addEventListener('mousemove', this.mouseHandler(),
                         false);
@@ -38,6 +43,7 @@ $def with (changeset_url, branches, svn_logs, copyfrom)
                 this.changesetUrl = changesetUrl;
                 this.author = author;
                 this.revision = revision;
+                this.branchHtml = branch;
                 this.date = dateHtml;
                 this.msg = msg;
 
@@ -85,6 +91,7 @@ $def with (changeset_url, branches, svn_logs, copyfrom)
             SvnBranchGraph.prototype.displayInfo = function(commit) {
                 this.author.innerHTML = commit.author;
                 this.revision.innerHTML = commit.revision;
+                this.branchHtml.innerHTML = commit.branch;
                 this.date.innerHTML = commit.date;
                 this.msg.innerHTML = commit.msg;
             }
@@ -160,6 +167,7 @@ $def with (changeset_url, branches, svn_logs, copyfrom)
                         eval('$:changeset_url'),
                         document.getElementById('author'),
                         document.getElementById('revision'),
+                        document.getElementById('branch'),
                         document.getElementById('date'),
                         document.getElementById('msg'));
                 graph.draw();
@@ -167,15 +175,16 @@ $def with (changeset_url, branches, svn_logs, copyfrom)
         </script>
     </head>
     <body onload="bodyOnload();">
+        <div id="commit-info">
+            <div><strong>Author:</strong> <span id="author"></span></div>
+            <div><strong>Revision:</strong> <span id="revision"></span></div>
+            <div><strong>Branch:</strong> <span id="branch"></span></div>
+            <div><strong>Date:</strong> <span id="date"></span></div>
+            <div><strong>Message:</strong> <span id="msg"></span></div>
+        </div>
+        <canvas id="canvas" width="2048" height="800" style="margin-top: 130px;"></canvas>
         <p>
             <a href=".">I want to view other branches.</a>
         </p>
-        <div>
-            <p><strong>Author:</strong> <span id="author"></span></p>
-            <p><strong>Revision:</strong> <span id="revision"></span></p>
-            <p><strong>Date:</strong> <span id="date"></span></p>
-            <p style="height: 50px"><strong>Message:</strong> <span id="msg"></span></p>
-        </div>
-        <canvas id="canvas" width="2048" height="800"></canvas>
     </body>
 </html>
