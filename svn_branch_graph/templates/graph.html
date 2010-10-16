@@ -1,4 +1,4 @@
-$def with (changeset_url, root_url, branches, svn_logs, copyfrom)
+$def with (changeset_url, branches, svn_logs, copyfrom)
 <html>
     <head>
         <title>svn_branch_graph for ${', '.join(branches)}</title>
@@ -168,7 +168,7 @@ $def with (changeset_url, root_url, branches, svn_logs, copyfrom)
     </head>
     <body onload="bodyOnload();">
         <p>
-            <a href="$root_url">I want to view other branches.</a>
+            <a href=".">I want to view other branches.</a>
         </p>
         <div>
             <p><strong>Author:</strong> <span id="author"></span></p>

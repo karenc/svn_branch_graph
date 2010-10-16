@@ -12,15 +12,6 @@ HOW TO INSTALL
 
         python setup.py install
 
-HOW TO USE
-----------
-    Running svn_branch_graph will start a web server listening on port 8080,
-    the host and port to listen on can be specified like this::
-
-        svn_branch_graph 127.0.0.1:8000
-
-    Go to http://hostname:8080/ in Firefox to use the application.
-
 CONFIGURATION
 -------------
     Please configure your svn repo url in svn_branch_graph.cfg, which should be
@@ -57,3 +48,29 @@ CONFIGURATION
 
         [graph]
         cut-off-point = 10
+
+DEPLOY AS APACHE CGI
+--------------------
+    Create a cgi directory::
+
+        mkdir /var/www/cgi
+
+    Create svn_branch_graph in your cgi directory::
+
+        import svn_branch_graph.main
+        svn_branch_graph.main.main()
+
+    Make svn_branch_graph executable::
+
+        chmod a+x svn_branch_graph
+
+    Add this in your apache config file::
+
+        ScriptAlias /path-you-like/ /var/www/cgi/
+        <Directory "/var/www/cgi">
+            Options +ExecCGI
+        </Directory>
+
+    Restart apache and go to
+    http://hostname/path-you-like/svn_branch_graph/ in Firefox to use
+    the application.

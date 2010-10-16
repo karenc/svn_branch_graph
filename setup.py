@@ -14,7 +14,4 @@ setup(
         install_requires=[
             'web.py',
             ],
-        entry_points = {
-            'console_scripts': ['svn_branch_graph = svn_branch_graph.main:main'],
-            },
         )

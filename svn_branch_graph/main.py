@@ -163,7 +163,6 @@ class GetGraph(object):
             changeset_url = config.get('changeset', 'url')
         return render.graph(
                 json.dumps(changeset_url),
-                urls[0],
                 branches,
                 json.dumps(svn_logs).replace('\\', '\\\\'),
                 json.dumps(copyfromlist).replace('\\', '\\\\'),
