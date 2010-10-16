@@ -1,7 +1,7 @@
-$def with (svn_branches_url, branches)
+$def with (svn_server_url, trunk_path, branches_path, branches)
 <html>
     <head>
-        <title>svn_branch_graph $svn_branches_url</title>
+        <title>svn_branch_graph $svn_server_url</title>
         <style type="text/css">
             body {
                 font-family: Arial;
@@ -23,9 +23,13 @@ $def with (svn_branches_url, branches)
 
         <p>Or, please select the branches to include in the graph:</p>
         <form action="get-graph">
+            <div class="branch">
+                <input name="branch" type="checkbox" id="trunk" value="$trunk_path" />
+                <label for="trunk">trunk</label>
+            </div>
             $for (i, branch) in enumerate(branches):
                 <div class="branch">
-                    <input name="branch" type="checkbox" id="$branch" value="$branch" />
+                    <input name="branch" type="checkbox" id="$branch" value="$branches_path/$branch" />
                     <label for="$branch">$branch</label>
                 </div>
             <div style="clear: both;"></div>

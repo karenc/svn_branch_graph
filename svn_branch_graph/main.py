@@ -18,11 +18,12 @@ config.read('svn_branch_graph.cfg')
 server_url = config.get('svn', 'server-url')
 
 branches_path = config.get('svn', 'branches-path')
-if not branches_path:
-    branches_path = 'branches'
+trunk_path = config.get('svn', 'trunk-path')
 
 username = config.get('svn', 'username')
 password = config.get('svn', 'password')
+
+cut_off_point = int(config.get('graph', 'cut-off-point'))
 
 cache_enabled = False
 if config.has_section('cache'):
@@ -48,10 +49,6 @@ def call(cmd):
     if p.returncode == 0 and cache_enabled:
         cache_database.cache(json.dumps(cmd), stdout)
     return p.returncode, stdout
-
-def get_branch_url():
-    svn_branches_url = '%s%s' % (server_url, branches_path)
-    return svn_branches_url
 
 def get_svn_ls(svn_branches_url):
     command = ['svn', 'ls', '--non-interactive', svn_branches_url]
@@ -101,20 +98,19 @@ def get_svn_log(svn_branch_url):
     svn_log.reverse()
     return svn_log, copyfrom
 
-BRANCH_COOKIE = 'svn-branches'
-
 
 class Index(object):
     def GET(self):
         """Returns the main page of svn branch graph, with a list of
         checkboxes to select which branches
         """
-        svn_branches_url = get_branch_url()
-        branches = get_svn_ls(svn_branches_url)
+        branches = get_svn_ls('%s%s' % (server_url, branches_path))
         # only include folders
         branches = [b.strip('/') for b in branches if b.endswith('/')]
         return render.index(
-                svn_branches_url,
+                server_url,
+                trunk_path,
+                branches_path,
                 branches,
                 )
 
@@ -127,24 +123,41 @@ class GetGraph(object):
           - `branch`: list of branch names
         """
         i = web.input(branch=[], branch_regexp='')
-        svn_branch_url = get_branch_url()
 
         if i.branch_regexp:
-            pattern = re.compile(i.branch_regexp)
-            branches = get_svn_ls(svn_branch_url)
-            branches = [b.strip('/') for b in branches if pattern.match(b)]
+            pattern = re.compile('%s/?$' % i.branch_regexp)
+            branches = get_svn_ls('%s%s' % (server_url, branches_path))
+            branches = ['%s/%s' % (branches_path, b.strip('/'))
+                    for b in branches if pattern.match(b)]
+            if pattern.match('trunk'):
+                branches.append(trunk_path)
         else:
             branches = i.branch
 
         svn_logs = []
         copyfromlist = {}
         for branch in branches:
-            logs, copyfrom = get_svn_log('/'.join([svn_branch_url, branch]))
-            copyfromlist[branch] = copyfrom
+            logs, copyfrom = get_svn_log('/'.join([server_url, branch]))
+            if branch == trunk_path:
+                readable = 'trunk'
+            else:
+                readable = branch.replace(branches_path, '').strip('/')
             for log in logs:
-                log.setdefault('branch', branch)
+                log['branch'] = readable
+            copyfromlist[readable] = copyfrom
             svn_logs.extend(logs)
         svn_logs.sort(lambda a, b: cmp(a['revision'], b['revision']))
+
+        if svn_logs:
+            initial_branch = svn_logs[0]['branch']
+            index = 0
+            for i, log in enumerate(svn_logs):
+                if log['branch'] != initial_branch:
+                    index = i
+                    break
+            if index > cut_off_point:
+                svn_logs = svn_logs[index - cut_off_point:]
+
         changeset_url = None
         if config.has_section('changeset'):
             changeset_url = config.get('changeset', 'url')

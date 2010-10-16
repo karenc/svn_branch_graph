@@ -36,6 +36,10 @@ class CacheSqlite3Database(object):
     def cache(self, key, value):
         conn = sqlite3.connect(self.database_path)
         c = conn.cursor()
+        if isinstance(key, str):
+            key = unicode(key, 'utf-8')
+        if isinstance(value, str):
+            value = unicode(value, 'utf-8')
         c.execute('insert into svn_branch_graph_cache VALUES (?, ?, ?)',
                 (key, now(), value))
         conn.commit()
@@ -44,7 +48,11 @@ class CacheSqlite3Database(object):
     def get(self, key):
         conn = sqlite3.connect(self.database_path)
         c = conn.cursor()
+        if isinstance(key, str):
+            key = unicode(key, 'utf-8')
         c.execute('select * from svn_branch_graph_cache where key=?', (key,))
         for row in c:
             if not self.is_expired(row[1]):
+                if isinstance(row[2], unicode):
+                    return row[2].encode('utf-8')
                 return row[2]

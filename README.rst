@@ -29,6 +29,7 @@ CONFIGURATION
         [svn]
         server-url = http://svnserver/repo/
         branches-path = branches
+        trunk-path = trunk
         username = username
         password = password
 
@@ -51,3 +52,8 @@ CONFIGURATION
         url = http://svnserver/changeset/%s
 
     where %s is where the revision will go.
+
+    Configure the number of commits to display before the first branch::
+
+        [graph]
+        cut-off-point = 10
